@@ -1,0 +1,61 @@
+<html>
+  <head>
+    <title>Buy Order {{ id }}</title>
+    <script src="https://js.stripe.com/v3/"></script>
+  </head>
+  <body>
+    <p hidden id="order-id">{{ id }}</p>
+    <h1>Заказ: {{ id }}</h1>
+    {% for line in lines %}
+    <p>
+      {{ line.item.name.value }} x{{ line.quantity.value }} {{line.item.price.amount }} {{ line.item.price.currency.value }}
+    </p>
+    {% endfor %}
+    <p>Итого: {{ price }} {{ currency.value }}</p>
+    <div id="payment-element"></div>
+    <button id="pay-button">Pay</button>
+    <script type="text/javascript">
+      const orderId = document.getElementById("order-id").textContent;
+      const STRIPE_PUBLIC_KEY =
+        "pk_test_51SnTCv2OVzlwAF8IlXfsDMmqZMKnc6x0MeK0CDOMGKC2CsgTdusCeX8IvqaU85qlP5ds9147T9lJaAkkoQnq4qvo00d7MDU36i";
+      var stripe = Stripe(STRIPE_PUBLIC_KEY);
+      var elements;
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          const response = await fetch(`/order/${orderId}/buy`, {
+            method: "GET",
+          });
+          const data = await response.json();
+
+          const clientSecret = data.client_secret;
+          elements = stripe.elements({
+            clientSecret: clientSecret,
+          });
+          const paymentElement = elements.create("payment");
+          paymentElement.mount("#payment-element");
+        } catch (err) {
+          console.error(err);
+          alert("Ошибка инициализации платежа");
+        }
+      });
+
+      document
+        .getElementById("pay-button")
+        .addEventListener("click", async () => {
+          stripe
+            .confirmPayment({
+              elements,
+              confirmParams: {
+                return_url: `http://localhost:8000/order/${orderId}/success`,
+              },
+            })
+            .then((result) => {
+              if (result.error) {
+                alert(result.error.message);
+              }
+            });
+        });
+    </script>
+  </body>
+</html>
