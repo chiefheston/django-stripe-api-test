@@ -55,7 +55,7 @@ class Order(Entity):
 
     @property
     def total(self) -> Money:
-        return self.subtotal - (self.discount_total + self.tax_total)
+        return self.subtotal - self.discount_total + self.tax_total
 
     @property
     def subtotal(self) -> Money:
