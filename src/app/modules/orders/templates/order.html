@@ -11,7 +11,11 @@
       {{ line.item.name.value }} x{{ line.quantity.value }} {{line.item.price.amount }} {{ line.item.price.currency.value }}
     </p>
     {% endfor %}
-    <p>Итого: {{ price }} {{ currency.value }}</p>
+    <hr>
+    <p>Подытог: {{ subtotal }} {{ currency.value }}</p>
+    <p>Скидка: {{ discount }} {{ currency.value }}</p>
+    <p>Налог: {{ tax }} {{ currency.value }}</p>
+    <p>Итого: {{ total }} {{ currency.value }}</p>
     <div id="payment-element"></div>
     <button id="pay-button">Pay</button>
     <script type="text/javascript">

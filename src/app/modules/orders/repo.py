@@ -5,11 +5,13 @@ from django.db.models import Prefetch
 from modules.common.values import Currency, Money
 from modules.items.enitites import Item
 from modules.items.values import ItemDescription, ItemName
-from modules.orders.enitites import Order, OrderLine
+from modules.orders.enitites import Order, OrderLine, Tax, Discount
 from modules.orders.enums import OrderStatus
 from modules.orders.models import Order as OrderModel
+from modules.orders.models import OrderDiscount as OrderDiscountModel
 from modules.orders.models import OrderLine as OrderLineModel
-from modules.orders.values import Quantity
+from modules.orders.models import OrderTax as OrderTaxModel
+from modules.orders.values import Quantity, DiscountAmount, DiscountName, TaxAmount, TaxName
 
 
 class OrderRepository(ABC):
@@ -22,17 +24,48 @@ class OrderRepository(ABC):
 
 class DjangoOrmOrderRepository(OrderRepository):
     def get_by_id(self, order_id: int) -> Order:
-        order_model = OrderModel.objects.prefetch_related(
-            Prefetch(
-                "lines",
-                OrderLineModel.objects.select_related("item"),
+        order_model = (
+            OrderModel.objects.prefetch_related(
+                Prefetch(
+                    "lines",
+                    OrderLineModel.objects.select_related("item"),
+                )
             )
-        ).get(id=order_id)
+            .prefetch_related(
+                Prefetch(
+                    "tax",
+                    OrderTaxModel.objects.select_related("tax"),
+                )
+            )
+            .prefetch_related(
+                Prefetch(
+                    "discount",
+                    OrderDiscountModel.objects.select_related("discount"),
+                )
+            )
+            .get(id=order_id)
+        )
 
         order = Order(
             id=order_model.id,
             status=OrderStatus(order_model.status.lower()),
         )
+
+        if order_model.tax.first():
+            order_tax_model = order_model.tax.first()
+            tax = Tax(
+                name=TaxName(order_tax_model.tax.name),
+                amount=TaxAmount(order_tax_model.tax.amount),
+            )
+            order.apply_tax(tax)
+
+        if order_model.discount.first():
+            order_discount_model = order_model.discount.first()
+            discount = Discount(
+                name=DiscountName(order_discount_model.discount.name),
+                amount=DiscountAmount(order_discount_model.discount.amount),
+            )
+            order.apply_discount(discount)
 
         order_lines_model = order_model.lines.all()
 

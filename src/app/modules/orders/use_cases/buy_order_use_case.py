@@ -18,10 +18,10 @@ class BuyOrderUseCase:
     def execute(self, item_id: int) -> BuyOrderResponse:
         order = self.order_repo.get_by_id(item_id)
 
-        if order.total_price == 0:
+        if order.total == 0:
             raise ApplicationException("Сумма заказа равноа 0")
 
-        amount = order.total_price.to_minor_units()
+        amount = order.total.to_minor_units()
         currency = order.currency.value
 
         client_secret = self.payment_gateway.create_payment(

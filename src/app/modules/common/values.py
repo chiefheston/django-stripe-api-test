@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
+from typing import Any
 
 from modules.common.enums import Currency
 from modules.common.exceptions import DomainTypeException
@@ -25,7 +26,11 @@ class Money(ValueObject):
         self._assert_same_currency(other)
         return Money(self.amount + other.amount, self.currency)
 
-    def __mul__(self, multiplier: int) -> "Money":
+    def __sub__(self, other: "Money") -> "Money":
+        self._assert_same_currency(other)
+        return Money(self.amount - other.amount, self.currency)
+
+    def __mul__(self, multiplier: int | Decimal) -> "Money":
         return Money(self.amount * multiplier, self.currency)
 
     def to_minor_units(self) -> int:

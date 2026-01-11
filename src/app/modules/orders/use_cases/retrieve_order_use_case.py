@@ -8,7 +8,10 @@ from modules.orders.repo import OrderRepository
 class RetrieveOrderResponse:
     id: int
     lines: list
-    price: Decimal
+    discount: Decimal
+    tax: Decimal
+    subtotal: Decimal
+    total: Decimal
     currency: str
 
 
@@ -22,6 +25,9 @@ class RetrieveOrderUseCase:
         return RetrieveOrderResponse(
             id=order.id,
             lines=order.lines,
-            price=order.total_price.amount,
-            currency=order.total_price.currency,
+            discount=order.discount_total.amount,
+            tax=order.tax_total.amount,
+            subtotal=order.subtotal.amount,
+            total=order.total.amount,
+            currency=order.total.currency,
         )

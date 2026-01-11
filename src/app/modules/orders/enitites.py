@@ -8,7 +8,25 @@ from modules.common.exceptions import DomainException
 from modules.common.values import Money
 from modules.items.enitites import Item
 from modules.orders.enums import OrderStatus
-from modules.orders.values import Quantity
+from modules.orders.values import (
+    DiscountAmount,
+    DiscountName,
+    Quantity,
+    TaxAmount,
+    TaxName,
+)
+
+
+@dataclass
+class Discount(Entity):
+    name: DiscountName
+    amount: DiscountAmount
+
+
+@dataclass
+class Tax(Entity):
+    name: TaxName
+    amount: TaxAmount
 
 
 @dataclass
@@ -17,7 +35,7 @@ class OrderLine(Entity):
     quantity: Quantity
 
     @property
-    def total_price(self) -> Money:
+    def total(self) -> Money:
         return self.item.price * self.quantity.value
 
 
@@ -25,24 +43,44 @@ class OrderLine(Entity):
 class Order(Entity):
     status: OrderStatus = OrderStatus.NEW
     lines: List[OrderLine] = field(default_factory=list)
+    discount: Discount | None = None
+    tax: Tax | None = None
 
     @property
-    def currency(self) -> Currency | None:
+    def currency(self) -> Currency:
         if not self.lines:
-            return None
+            return Currency.USD
+
         return self.lines[0].item.price.currency
 
     @property
-    def total_price(self) -> Money | None:
-        if not self.currency:
-            return None
+    def total(self) -> Money:
+        return self.subtotal - (self.discount_total + self.tax_total)
 
-        total = Money(Decimal("0"), self.currency)
+    @property
+    def subtotal(self) -> Money:
+        subtotal = Money(Decimal("0"), self.currency)
 
         for line in self.lines:
-            total += line.total_price
+            subtotal += line.total
 
-        return total
+        return subtotal
+
+    @property
+    def discount_total(self) -> Money:
+        if not self.discount:
+            return Money(Decimal("0"), self.currency)
+
+        return self.subtotal * (self.discount.amount.value / 100)
+
+    @property
+    def tax_total(self) -> Money:
+        if not self.tax:
+            return Money(Decimal("0"), self.currency)
+
+        discounted = self.subtotal - self.discount_total
+
+        return discounted * (self.tax.amount.value / 100)
 
     def append_line(self, line: OrderLine) -> None:
         if self.currency and self.currency != line.item.price.currency:
@@ -57,3 +95,9 @@ class Order(Entity):
             raise DomainException(f"Невозможно оплатить. Заказ {self.id} уже оплачен")
 
         self.status = OrderStatus.PAID
+
+    def apply_discount(self, discount: Discount) -> None:
+        self.discount = discount
+
+    def apply_tax(self, tax: Tax) -> None:
+        self.tax = tax
