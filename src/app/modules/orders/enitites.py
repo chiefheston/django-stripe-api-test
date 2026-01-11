@@ -83,7 +83,7 @@ class Order(Entity):
         return discounted * (self.tax.amount.value / 100)
 
     def append_line(self, line: OrderLine) -> None:
-        if self.currency and self.currency != line.item.price.currency:
+        if self.lines and self.currency != line.item.price.currency:
             raise DomainException(
                 f"Невозможно добавить {line.item.name.value} — несовпадение валют"
             )
