@@ -5,13 +5,19 @@ from django.db.models import Prefetch
 from modules.common.values import Currency, Money
 from modules.items.enitites import Item
 from modules.items.values import ItemDescription, ItemName
-from modules.orders.enitites import Order, OrderLine, Tax, Discount
+from modules.orders.enitites import Discount, Order, OrderLine, Tax
 from modules.orders.enums import OrderStatus
 from modules.orders.models import Order as OrderModel
 from modules.orders.models import OrderDiscount as OrderDiscountModel
 from modules.orders.models import OrderLine as OrderLineModel
 from modules.orders.models import OrderTax as OrderTaxModel
-from modules.orders.values import Quantity, DiscountAmount, DiscountName, TaxAmount, TaxName
+from modules.orders.values import (
+    DiscountAmount,
+    DiscountName,
+    Quantity,
+    TaxAmount,
+    TaxName,
+)
 
 
 class OrderRepository(ABC):

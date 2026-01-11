@@ -1,6 +1,12 @@
 from django.contrib import admin
-from modules.orders.models import Order, OrderDiscount, OrderLine, OrderTax, Tax, Discount
-
+from modules.orders.models import (
+    Discount,
+    Order,
+    OrderDiscount,
+    OrderLine,
+    OrderTax,
+    Tax,
+)
 
 admin.site.register([Tax, Discount])
 
